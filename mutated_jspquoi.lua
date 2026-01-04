@@ -22,6 +22,12 @@ if game.PlaceId == 140290079878213 then
     _G.autoSellBalloonEgg = false
     _G.autoSellBarrelEgg = false
     _G.autoSellAllExceptPoseidon = false
+    _G.autoMutationStart = false
+    _G.autoMutationReveal = false
+    _G.lastMutationStart = nil
+    _G.lastMutationReveal = nil
+
+
 
     --[[ Functions
       ______                _   _                 
@@ -33,6 +39,63 @@ if game.PlaceId == 140290079878213 then
                                                                                                                                                                  
      --]]  
 
+
+    -- Mutation Remote Hook -------------------------------------------------------------------------------------------------------------
+
+-- Mutation Remote Hook -------------------------------------------------------------------------------------------------------------
+
+local Request = game:GetService("ReplicatedStorage")
+    :WaitForChild("Packages")
+    :WaitForChild("Red")
+    :WaitForChild("Util")
+    :WaitForChild("Event")
+    :WaitForChild("Request")
+
+_G.mutationPackets = _G.mutationPackets or {
+    Start = {},
+    Reveal = {}
+}
+
+if not _G.__mutationHooked then
+    _G.__mutationHooked = true
+
+    local mt = getrawmetatable(game)
+    local old = mt.__namecall
+    setreadonly(mt, false)
+
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+
+        if self == Request and method == "FireServer" then
+            if typeof(args[1]) == "table"
+            and args[1][1]
+            and typeof(args[1][1]) == "table" then
+
+                local data = args[1][1]
+                local actionId = data[1]
+                local token = data[2]
+                local channel = data[3]
+
+                -- START
+                if channel == "\129" then
+                    table.insert(_G.mutationPackets.Start, data)
+                end
+
+                -- REVEAL
+                if channel == "\128" then
+                    table.insert(_G.mutationPackets.Reveal, data)
+                end
+            end
+        end
+
+        return old(self, ...)
+    end)
+
+    setreadonly(mt, true)
+end
+
+
     -- Auto Buy Egg Functions -------------------------------------------------------------------------------------------------------------------
     function autoBuyEgg()
         if _G.autoBuyEgg then
@@ -42,14 +105,13 @@ if game.PlaceId == 140290079878213 then
 
                 while _G.autoBuyEgg do
                     RollMachineController:BuyAsync(1)
-                    task.wait(0.15)
+                    task.wait(0.01)
                 end
             end)
         end
     end
 
     -- Debug Egg
-
     function debugEggNames()
         local Players = game:GetService("Players")
         local player = Players.LocalPlayer
@@ -74,35 +136,7 @@ if game.PlaceId == 140290079878213 then
         print("=== FIN DE LA LISTE ===")
     end
 
-    -- Auto Sell Simple Egg Functions -------------------------------------------------------------------------------------------------------------
-    function autoSellSimpleEgg()
-        if _G.autoSellSimpleEgg then
-            task.spawn(function()
-                local Players = game:GetService("Players")
-                local SellerController = require(game:GetService("ReplicatedFirst").Controllers.MainControllers.SellerController)
-                
-                while _G.autoSellSimpleEgg do
-                    local player = Players.LocalPlayer
-                    local backpack = player:FindFirstChild("Backpack")
-                    
-                    if backpack then
-                        for _, tool in ipairs(backpack:GetChildren()) do
-                            local eggName = tool:GetAttribute("Name")
-                            local eggId = tool:GetAttribute("Id")
-                            
-                            if eggName == "SimpleEgg" and eggId and _G.autoSellSimpleEgg then
-                                pcall(function()
-                                    SellerController:SellEggAsync(eggId)
-                                end)
-                                task.wait(0.1)
-                            end
-                        end
-                    end
-                    task.wait(0.1)
-                end
-            end)
-        end
-    end
+
 
     -- Auto Sell Basic Egg Functions -------------------------------------------------------------------------------------------------------------
     function autoSellBasicEgg()
@@ -124,11 +158,11 @@ if game.PlaceId == 140290079878213 then
                                 pcall(function()
                                     SellerController:SellEggAsync(eggId)
                                 end)
-                                task.wait(0.1)
+                                task.wait(0.01)
                             end
                         end
                     end
-                    task.wait(0.1)
+                    task.wait(0.01)
                 end
             end)
         end
@@ -154,16 +188,46 @@ if game.PlaceId == 140290079878213 then
                                 pcall(function()
                                     SellerController:SellEggAsync(eggId)
                                 end)
-                                task.wait(0.1)
+                                task.wait(0.01)
                             end
                         end
                     end
-                    task.wait(0.1)
+                    task.wait(0.01)
                 end
             end)
         end
     end
 
+
+    -- Auto Sell Simple Egg Functions -------------------------------------------------------------------------------------------------------------
+    function autoSellSimpleEgg()
+        if _G.autoSellSimpleEgg then
+            task.spawn(function()
+                local Players = game:GetService("Players")
+                local SellerController = require(game:GetService("ReplicatedFirst").Controllers.MainControllers.SellerController)
+                
+                while _G.autoSellSimpleEgg do
+                    local player = Players.LocalPlayer
+                    local backpack = player:FindFirstChild("Backpack")
+                    
+                    if backpack then
+                        for _, tool in ipairs(backpack:GetChildren()) do
+                            local eggName = tool:GetAttribute("Name")
+                            local eggId = tool:GetAttribute("Id")
+                            
+                            if eggName == "SimpleEgg" and eggId and _G.autoSellSimpleEgg then
+                                pcall(function()
+                                    SellerController:SellEggAsync(eggId)
+                                end)
+                                task.wait(0.01)
+                            end
+                        end
+                    end
+                    task.wait(0.01)
+                end
+            end)
+        end
+    end
     -- Auto Sell Shark Egg Functions -------------------------------------------------------------------------------------------------------------
     function autoSellSharkEgg()
         if _G.autoSellSharkEgg then
@@ -184,11 +248,11 @@ if game.PlaceId == 140290079878213 then
                                 pcall(function()
                                     SellerController:SellEggAsync(eggId)
                                 end)
-                                task.wait(0.1)
+                                task.wait(0.01)
                             end
                         end
                     end
-                    task.wait(0.1)
+                    task.wait(0.01)
                 end
             end)
         end
@@ -214,11 +278,11 @@ if game.PlaceId == 140290079878213 then
                                 pcall(function()
                                     SellerController:SellEggAsync(eggId)
                                 end)
-                                task.wait(0.1)
+                                task.wait(0.01)
                             end
                         end
                     end
-                    task.wait(0.1)
+                    task.wait(0.01)
                 end
             end)
         end
@@ -244,11 +308,11 @@ if game.PlaceId == 140290079878213 then
                                 pcall(function()
                                     SellerController:SellEggAsync(eggId)
                                 end)
-                                task.wait(0.1)
+                                task.wait(0.01)
                             end
                         end
                     end
-                    task.wait(0.1)
+                    task.wait(0.01)
                 end
             end)
         end
@@ -274,11 +338,11 @@ if game.PlaceId == 140290079878213 then
                                 pcall(function()
                                     SellerController:SellEggAsync(eggId)
                                 end)
-                                task.wait(0.1)
+                                task.wait(0.01)
                             end
                         end
                     end
-                    task.wait(0.1)
+                    task.wait(0.01)
                 end
             end)
         end
@@ -304,15 +368,50 @@ if game.PlaceId == 140290079878213 then
                                 pcall(function()
                                     SellerController:SellEggAsync(eggId)
                                 end)
-                                task.wait(0.1)
+                                task.wait(0.01)
                             end
                         end
                     end
-                    task.wait(0.1)
+                    task.wait(0.01)
                 end
             end)
         end
     end
+
+
+    -- Auto Mutation -------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Auto Mutation -------------------------------------------------------------------------------------------------------------------------------------------------
+
+local function replayAll(list)
+    for _, data in ipairs(list) do
+        Request:FireServer({ data })
+        task.wait(0.15)
+    end
+end
+
+function autoMutationStart()
+    if _G.autoMutationStart then
+        task.spawn(function()
+            while _G.autoMutationStart do
+                replayAll(_G.mutationPackets.Start)
+                task.wait(0.5)
+            end
+        end)
+    end
+end
+
+function autoMutationReveal()
+    if _G.autoMutationReveal then
+        task.spawn(function()
+            while _G.autoMutationReveal do
+                replayAll(_G.mutationPackets.Reveal)
+                task.wait(0.5)
+            end
+        end)
+    end
+end
+
 
     --[[ Tab
       _______    _     
@@ -326,6 +425,12 @@ if game.PlaceId == 140290079878213 then
 
     local Farm = Window:MakeTab({
         Name = "Farm",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+
+    local Mutation = Window:MakeTab({
+        Name = "Mutation",
         Icon = "rbxassetid://4483345998",
         PremiumOnly = false
     })
@@ -354,6 +459,10 @@ if game.PlaceId == 140290079878213 then
     local SellSection = Farm:AddSection({
         Name = "Auto Sell"
     })
+    -- Auto Mutation Section
+    local MutationSection = Mutation:AddSection({
+        Name = "Auto Mutation"
+    })
     -- Misc Section
     local MiscSection = Misc:AddSection({
         Name = "Misc"
@@ -370,7 +479,7 @@ if game.PlaceId == 140290079878213 then
                  |___/ |___/                                                                               
      --]]  
 
-    -- Auto Buy EGG Toggle
+    -- Auto Buy EGG Toggle ----------------------------------------------------------------------------------------
     FarmSection:AddToggle({
         Name = "Auto Buy",
         Default = false,
@@ -379,6 +488,7 @@ if game.PlaceId == 140290079878213 then
             autoBuyEgg()
         end
     })
+
 
     SellSection:AddToggle({
         Name = "Auto Sell Simple EGG",
@@ -451,6 +561,28 @@ if game.PlaceId == 140290079878213 then
             autoSellAllExceptPoseidon()
         end
     })
+    
+    -- Mutation Toggle ----------------------------------------------------------------------------------------
+
+    MutationSection:AddToggle({
+        Name = "Auto Mutation Start",
+        Default = false,
+        Callback = function(Value)
+            _G.autoMutationStart = Value
+            autoMutationStart()
+        end
+    })
+
+    MutationSection:AddToggle({
+        Name = "Auto Mutation Reveal",
+        Default = false,
+        Callback = function(Value)
+            _G.autoMutationReveal = Value
+            autoMutationReveal()
+        end
+    })
+
+
 
     --[[ Button
       ____        _   _              
@@ -474,6 +606,7 @@ if game.PlaceId == 140290079878213 then
             debugEggNames()
         end    
     })
+
 
 
     OrionLib:Init()
