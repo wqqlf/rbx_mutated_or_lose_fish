@@ -1,4 +1,3 @@
-if game.PlaceId == 140290079878213 then
     local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
     local Window = Library.CreateLib("Wq Mutated Or Lose", "DarkTheme")
 
